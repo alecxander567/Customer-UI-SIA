@@ -35,9 +35,12 @@ function Landingpage() {
 
                 {/* Right: Shop Now Button */}
                 <div className="hidden md:block">
-                <button className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition">
+                <Link
+                    to="/home"
+                    className="w-full mt-4 bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
+                >
                     Shop Now
-                </button>
+                </Link>
                 </div>
 
                 {/* Mobile Menu Toggle */}
@@ -63,9 +66,12 @@ function Landingpage() {
                 <a href="#contact" onClick={() => setIsOpen(false)} className="block hover:text-gray-600">
                     Contact
                 </a>
-                <button className="w-full mt-4 bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition">
+               <Link
+                    to="/home"
+                    className="w-full mt-4 bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
+                >
                     Shop Now
-                </button>
+                </Link>
             </div>
 
            <section
@@ -75,51 +81,54 @@ function Landingpage() {
                 <div className="flex flex-col md:flex-row w-full items-center md:items-start justify-between gap-6">
                     {/* Left: Text Content */}
                     <div className="max-w-xl text-center md:text-left flex flex-col items-center md:items-start mt-10">
-                        <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-                            Welcome to N-Tech Hardware
-                        </h2>
-                        <p className="text-base sm:text-md text-gray-300 mb-6">
-                            You may have noticed some of the tools used during your home inspection. Now you too can own some of these tools and other items needed as a homeowner.
-                        </p>
+                    <h2 className="text-3xl sm:text-4xl font-bold mb-6">
+                        Welcome to N-Tech Hardware
+                    </h2>
+                    <p className="text-base sm:text-md text-gray-300 mb-6">
+                        You may have noticed some of the tools used during your home inspection. Now you too can own some of these tools and other items needed as a homeowner.
+                    </p>
 
-                        {/* Shop Now Button */}
-                        <button className="bg-white text-black px-6 py-3 rounded-lg hover:bg-gray-200 transition">
-                            Shop Now
-                        </button>
+                    {/* Shop Now Button */}
+                    <Link
+                        to="/home"
+                        className="w-full sm:w-auto mt-4 bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 hover:text-black transition shadow-md text-center"
+                    >
+                        Shop Now
+                    </Link>
                     </div>
 
                     {/* Right: Image */}
                     <div className="hidden md:block -mt-10">
-                        <img
-                            src="/logo.png"
-                            alt="Logo"
-                            className="w-[300px] md:w-[400px] lg:w-[555px] h-[370px]"
-                        />
+                    <img
+                        src="/logo.png"
+                        alt="Logo"
+                        className="w-[300px] md:w-[400px] lg:w-[555px] h-[370px]"
+                    />
                     </div>
                 </div>
-            </section>
+                </section>
 
-            <section className="py-16 bg-white" id="services">
-                <div className="max-w-6xl mx-auto px-4 text-center">
-                    <h2 className="text-4xl font-bold mb-10">Our Services</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-                    <div className="flex flex-col items-center">
-                        <CurrencyDollarIcon className="h-16 w-16 text-green-500 mb-4" />
-                        <h3 className="text-xl font-semibold">Cash on Delivery</h3>
-                        <p className="text-gray-600 mt-2">Pay when your order arrives at your doorstep.</p>
+                <section className="py-16 bg-white" id="services">
+                    <div className="max-w-6xl mx-auto px-4 text-center">
+                        <h2 className="text-4xl font-bold mb-10">Our Services</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                        <div className="flex flex-col items-center">
+                            <CurrencyDollarIcon className="h-16 w-16 text-green-500 mb-4" />
+                            <h3 className="text-xl font-semibold">Cash on Delivery</h3>
+                            <p className="text-gray-600 mt-2">Pay when your order arrives at your doorstep.</p>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <CreditCardIcon className="h-16 w-16 text-blue-500 mb-4" />
+                            <h3 className="text-xl font-semibold">Online Payment</h3>
+                            <p className="text-gray-600 mt-2">Secure and fast online payment options available.</p>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <ShoppingCartIcon className="h-16 w-16 text-purple-500 mb-4" />
+                            <h3 className="text-xl font-semibold">Online Shopping</h3>
+                            <p className="text-gray-600 mt-2">Shop your favorite items from the comfort of home.</p>
+                        </div>
+                        </div>
                     </div>
-                    <div className="flex flex-col items-center">
-                        <CreditCardIcon className="h-16 w-16 text-blue-500 mb-4" />
-                        <h3 className="text-xl font-semibold">Online Payment</h3>
-                        <p className="text-gray-600 mt-2">Secure and fast online payment options available.</p>
-                    </div>
-                    <div className="flex flex-col items-center">
-                        <ShoppingCartIcon className="h-16 w-16 text-purple-500 mb-4" />
-                        <h3 className="text-xl font-semibold">Online Shopping</h3>
-                        <p className="text-gray-600 mt-2">Shop your favorite items from the comfort of home.</p>
-                    </div>
-                    </div>
-                </div>
             </section>
 
              <section className="py-16 px-10 bg-white" id="about">
