@@ -1,6 +1,6 @@
 # Customer-UI-SIA
 
-Customer-UI-SIA is a simple and modern web application for managing customer information. It features a user-friendly front end and a powerful backend, making it easy to view, add, update, and delete customer data.
+Customer-UI-SIA is a simple and modern web application for managing customer information. It features a user-friendly front end and a powerful backend, making it easy to view, add, update, and delete orders for customer data.
 
 ## Technologies Used
 
@@ -18,10 +18,13 @@ Customer-UI-SIA is a simple and modern web application for managing customer inf
 
 ## Features
 
-- View a list of customers
-- Add new customers
-- Edit existing customer details
-- Delete customers
+- View all products available
+- Buy items using a online test payment
+- Edit existing orders
+- Cancellation of orders
+- Orders status
+- Adding to cart
+- Analysis for top selling items
 
 ## Getting Started
 
