@@ -10,6 +10,7 @@ function Homepage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [showOrderModal, setShowOrderModal] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
+    const [alertMessage, setAlertMessage] = useState("");
     const [orderForm, setOrderForm] = useState({
         customer_name: "",
         quantity: 1,
@@ -21,7 +22,6 @@ function Homepage() {
     const [activeSection, setActiveSection] = useState("store");
     const [orders, setOrders] = useState([]);
 
-
     useEffect(() => {
         axios.get("http://localhost:8080/api/items")
             .then(response => {
@@ -32,6 +32,16 @@ function Homepage() {
             console.error("Error fetching items:", error);
             });
     }, []);
+
+    const handleItemQuantityUpdate = (itemId, change) => {
+        setItems((prevItems) =>
+            prevItems.map(item =>
+                item.id === itemId
+                    ? { ...item, quantity: Math.max(item.quantity + change, 0) }
+                    : item
+            )
+        );
+    };
 
     // Fetch items whenever the category changes
     useEffect(() => {
@@ -71,34 +81,42 @@ function Homepage() {
 
     const handleOrderSubmit = async () => {
         try {
-            const total_price = currentItem.price * orderForm.quantity;
+            // 1️⃣ Create order
             const orderPayload = {
-                item: { id: currentItem.id },
-                customer_name: orderForm.customer_name,
-                quantity: orderForm.quantity,
-                unit: orderForm.unit,
-                total_price,
-                address: orderForm.address,
-                contact_number: orderForm.contact_number,
-                order_date: new Date().toISOString().split("T")[0],
-                employee_id: 1,
-                payment_type: orderForm.payment_type
+            item: { id: currentItem.id },
+            customer_name: orderForm.customer_name,
+            order_name: currentItem.itemName,
+            quantity: orderForm.quantity,
+            unit: orderForm.unit,
+            total_price: currentItem.price * orderForm.quantity,
+            address: orderForm.address,
+            contact_number: orderForm.contact_number,
+            order_date: new Date().toISOString().split("T")[0],
+            employee_id: 1,
+            payment_type: orderForm.payment_type
             };
 
-            const orderResponse = await axios.post("http://localhost:8080/api/orders", orderPayload);
-            const orderId = orderResponse.data.order_id; 
+            const orderResponse = await axios.post(
+            "http://localhost:8080/api/orders",
+            orderPayload
+            );
+            const orderId = orderResponse.data.orderId;
 
-            setShowOrderModal(false);
+            // 2️⃣ Create payment
+            const paymentPayload = {
+            amount: orderPayload.total_price,
+            productId: currentItem.id,
+            orderId
+            };
 
-            if (orderForm.payment_type !== "Cash on Delivery") {
-                await checkout(currentItem, orderForm.quantity);
-            } else {
-                alert("Order placed! Payment will be collected on delivery.");
-            }
+            const paymentResponse = await axios.post(
+            "http://localhost:8080/payments/create-checkout",
+            paymentPayload
+            );
 
-        } catch (error) {
-            console.error("Error creating order/payment:", error);
-            alert("Error creating order/payment. Check console.");
+            window.location.href = paymentResponse.data.checkoutUrl;
+        } catch (err) {
+            console.error("Error creating order/payment:", err);
         }
     };
 
@@ -126,7 +144,27 @@ function Homepage() {
         .catch(error => {
             console.error("Error fetching orders:", error);
         });
-    }, []); //
+    }, []); 
+
+    // handleCancel function
+    const handleCancel = async (orderId, itemId) => {
+        try {
+            await axios.delete(`http://localhost:8080/api/orders/${orderId}/cancel`);
+
+            setAlertMessage("Order cancelled successfully");
+
+            setOrders(prev => prev.filter(order => order.orderId !== orderId));
+
+            handleItemQuantityUpdate(itemId, 1);
+
+            setTimeout(() => setAlertMessage(""), 3000);
+        } catch (error) {
+            console.error("Error cancelling order:", error);
+
+            setAlertMessage("Failed to cancel order");
+            setTimeout(() => setAlertMessage(""), 3000);
+        }
+    };
 
     return(
         <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -258,82 +296,127 @@ function Homepage() {
             </div>
 
             <div className="p-6">
-            {activeSection === "store" && (
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {items.map((item) => (
-                    <div key={item.id} className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-200">
-                    <img
-                        src={`http://localhost:8080/${item.imagePath.replace(/\\/g, "/")}`}
-                        alt={item.itemName}
-                        className="w-full h-40"
-                    />
-                    <div className="p-4">
-                        <h3 className="text-lg font-semibold">{item.itemName}</h3>
-                        <p className="text-sm text-gray-600 capitalize">Category: {item.category}</p>
-                        <p className="text-sm text-gray-600">Unit: {item.unit}</p>
-                        <p className="text-xl font-bold mt-2">₱{item.price}</p>
-                        <p className="text-sm text-gray-500">Stock: {item.quantity}</p>
-                        <div className="flex gap-2 mt-3">
-                        <button className="flex-1 bg-gray-300 text-black py-2 rounded-xl hover:bg-gray-400 transition">
-                            Add to Cart
-                        </button>
-                        <button
-                            className="flex-1 bg-black text-white py-2 rounded-xl hover:bg-gray-800 transition"
-                            onClick={() => handleBuyNowClick(item)}
-                        >
-                            Buy Now
-                        </button>
-                        </div>
-                    </div>
-                    </div>
-                ))}
-                </div>
-            )}
-
-           {activeSection === "orders" && (
-            <div className="space-y-4">
-                {orders.length > 0 ? (
-                orders.map((order) => (
-                    <div
-                    key={order.order_id}
-                    className="bg-white shadow rounded-xl p-4 flex items-center gap-4"
+                {alertMessage && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+                    <div className="bg-white p-6 rounded shadow-lg flex items-center gap-3 pointer-events-auto">
+                    <svg
+                        className="w-6 h-6 text-green-500"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
                     >
-                    {/* Item Image */}
-                    {order.item ? (
-                        <img
-                        src={`http://localhost:8080/${order.item.imagePath.replace(/\\/g, "/")}`}
-                        alt={order.item.itemName}
-                        className="w-50 h-50"
-                        />
-                    ) : (
-                        <div className="w-full h-40 bg-gray-200 flex items-center justify-center">
-                        No Image
-                        </div>
-                    )}
-
-                    {/* Order Details */}
-                    <div>
-                        <h3 className="text-lg font-bold">
-                        {order.item ? order.item.itemName : "No Item"}
-                        </h3>
-                        <p className="text-sm text-gray-600">Customer: {order.customer_name}</p>
-                        <p className="text-sm text-gray-600">Quantity: {order.quantity}</p>
-                        <p className="text-sm text-gray-600">
-                        Payment: {order.payment_type === "CashOnDelivery" ? "Cash on Delivery" : order.payment_type || "Cash on Delivery"}
-                        </p>
-                        <p className="text-sm text-gray-600">Status: {order.status || "Pending"}</p>
-                        <p className="text-sm text-gray-800 font-semibold">
-                        Total: ₱{order.total_price}
-                        </p>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span className="text-black text-lg font-medium">{alertMessage}</span>
                     </div>
-                    </div>
-                ))
-                ) : (
-                <p className="text-gray-600">No orders found.</p>
+                </div>
                 )}
-            </div>
-            )}
 
+                {activeSection === "store" && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {items.map((item) => (
+                        <div key={item.id} className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-200">
+                        <img
+                            src={`http://localhost:8080/${item.imagePath.replace(/\\/g, "/")}`}
+                            alt={item.itemName}
+                            className="w-full h-40"
+                        />
+                        <div className="p-4">
+                            <h3 className="text-lg font-semibold">{item.itemName}</h3>
+                            <p className="text-sm text-gray-600 capitalize">Category: {item.category}</p>
+                            <p className="text-sm text-gray-600">Unit: {item.unit}</p>
+                            <p className="text-xl font-bold mt-2">₱{item.price}</p>
+                            <p className="text-sm text-gray-500">Stock: {item.quantity}</p>
+                            <div className="flex gap-2 mt-3">
+                            <button className="flex-1 bg-gray-300 text-black py-2 rounded-xl hover:bg-gray-400 transition">
+                                Add to Cart
+                            </button>
+                            <button
+                                className="flex-1 bg-black text-white py-2 rounded-xl hover:bg-gray-800 transition"
+                                onClick={() => handleBuyNowClick(item)}
+                            >
+                                Buy Now
+                            </button>
+                            </div>
+                        </div>
+                        </div>
+                    ))}
+                    </div>
+                )}
+
+                {activeSection === "orders" && (
+                    <div className="space-y-4">
+                        {orders.length > 0 ? (
+                            orders.map((order) => (
+                                <div
+                                key={order.orderId}
+                                className="bg-white shadow rounded-xl p-4 flex justify-between items-start"
+                                >
+                                {/* Left Section: Image + Details */}
+                                <div className="flex items-start gap-4">
+                                    {/* Item Image */}
+                                    {order.item ? (
+                                    <img
+                                        src={`http://localhost:8080/${order.item.imagePath.replace(/\\/g, "/")}`}
+                                        alt={order.item.itemName}
+                                        className="w-40 h-40 rounded-lg"
+                                    />
+                                    ) : (
+                                    <div className="w-40 h-40 bg-gray-200 flex items-center justify-center rounded-lg">
+                                        No Image
+                                    </div>
+                                    )}
+
+                                    {/* Order Details */}
+                                    <div>
+                                    <h3 className="text-lg font-bold">
+                                        {order.item ? order.item.itemName : "No Item"}
+                                    </h3>
+                                    <p className="text-sm text-gray-600">Customer: {order.customer_name}</p>
+                                    <p className="text-sm text-gray-600">Quantity: {order.quantity}</p>
+                                    <p className="text-sm text-gray-600">
+                                        Payment:{" "}
+                                        {order.payment_type === "CashOnDelivery"
+                                        ? "Cash on Delivery"
+                                        : order.payment_type || "Cash on Delivery"}
+                                    </p>
+                                    <p className="text-sm text-gray-600">Status: {order.status || "Pending"}</p>
+                                    <p className="text-sm text-gray-800 font-semibold">
+                                        Total: ₱{order.total_price}
+                                    </p>
+                                    </div>
+                                </div>
+
+                                {/* Right Section: Action Buttons */}
+                                <div className="flex flex-row gap-2 self-end">
+                                    <button
+                                        className="px-3 py-1 border border-red-500 text-red-500 rounded-lg hover:bg-red-50"
+                                        onClick={() => handleCancel(order.orderId, order.item.id)}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                    className="px-3 py-1 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50"
+                                    onClick={() => handleEdit(order)}
+                                    >
+                                    Edit
+                                    </button>
+                                    <button
+                                    className="px-3 py-1 border border-green-500 text-green-500 rounded-lg hover:bg-green-50"
+                                    onClick={() => handleDelivered(order.order_id)}
+                                    >
+                                    Delivered
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                        ) : (
+                        <p className="text-gray-600">No orders found.</p>
+                        )}
+                    </div>
+                    )}
             </div>
 
             {showOrderModal && (
