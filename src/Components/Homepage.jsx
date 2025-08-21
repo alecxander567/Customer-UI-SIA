@@ -11,6 +11,8 @@ function Homepage() {
     const [showOrderModal, setShowOrderModal] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
     const [alertMessage, setAlertMessage] = useState("");
+    const [orderMessage, setOrderMessage] = useState("");
+    const [showOrderMessage, setShowOrderMessage] = useState(false); 
     const [orderForm, setOrderForm] = useState({
         customer_name: "",
         quantity: 1,
@@ -81,42 +83,92 @@ function Homepage() {
 
     const handleOrderSubmit = async () => {
         try {
-            // 1️⃣ Create order
             const orderPayload = {
-            item: { id: currentItem.id },
-            customer_name: orderForm.customer_name,
-            order_name: currentItem.itemName,
-            quantity: orderForm.quantity,
-            unit: orderForm.unit,
-            total_price: currentItem.price * orderForm.quantity,
-            address: orderForm.address,
-            contact_number: orderForm.contact_number,
-            order_date: new Date().toISOString().split("T")[0],
-            employee_id: 1,
-            payment_type: orderForm.payment_type
+                item: { id: currentItem.id },
+                customer_name: orderForm.customer_name,
+                order_name: currentItem.itemName,
+                quantity: orderForm.quantity,
+                unit: orderForm.unit,
+                total_price: currentItem.price * orderForm.quantity,
+                address: orderForm.address,
+                contact_number: orderForm.contact_number,
+                order_date: new Date().toISOString().split("T")[0],
+                employee_id: 1,
+                payment_type: orderForm.payment_type
             };
 
             const orderResponse = await axios.post(
-            "http://localhost:8080/api/orders",
-            orderPayload
+                "http://localhost:8080/api/orders",
+                orderPayload
             );
             const orderId = orderResponse.data.orderId;
 
-            // 2️⃣ Create payment
-            const paymentPayload = {
-            amount: orderPayload.total_price,
-            productId: currentItem.id,
-            orderId
-            };
+            // Handle payment
+            if (orderForm.payment_type === "CashOnDelivery") {
+                const codResponse = await axios.post(
+                    "http://localhost:8080/payments/create-checkout",
+                    {
+                        amount: Number(orderPayload.total_price),
+                        productId: Number(currentItem.id),
+                        orderId: Number(orderId),
+                        paymentType: "CashOnDelivery"
+                    }
+                );
 
-            const paymentResponse = await axios.post(
-            "http://localhost:8080/payments/create-checkout",
-            paymentPayload
-            );
+                if (codResponse.data.codSuccess) {
+                    setOrders(prev => [
+                        ...prev,
+                        {
+                            orderId,
+                            customer_name: orderForm.customer_name,
+                            order_name: currentItem.itemName,
+                            quantity: orderForm.quantity,
+                            unit: orderForm.unit,
+                            total_price: orderPayload.total_price,
+                            address: orderForm.address,
+                            contact_number: orderForm.contact_number,
+                            order_date: orderPayload.order_date,
+                            employee_id: 1,
+                            item_id: currentItem.id,
+                            payment_type: "CashOnDelivery"
+                        }
+                    ]);
+                    setShowOrderModal(false); 
+                    setAlertMessage("Order placed successfully! Please prepare cash on delivery.");
+                    setTimeout(() => setAlertMessage(""), 3000);
+                } else {
+                    setOrderMessage("❌ Something went wrong. Please try again.");
+                    setShowOrderMessage(true);
+                    setTimeout(() => setShowOrderMessage(false), 3000);
+                }
+            } else {
+                const paymentResponse = await axios.post(
+                    "http://localhost:8080/payments/create-checkout",
+                    {
+                        amount: Number(orderPayload.total_price),
+                        productId: Number(currentItem.id),
+                        orderId: Number(orderId),
+                        paymentType: orderForm.payment_type
+                    }
+                );
 
-            window.location.href = paymentResponse.data.checkoutUrl;
+                if (paymentResponse.data.checkoutUrl) {
+                    window.location.href = paymentResponse.data.checkoutUrl;
+                } else {
+                    setOrderMessage("❌ Something went wrong. Please try again.");
+                    setShowOrderMessage(true);
+                    setTimeout(() => setShowOrderMessage(false), 3000);
+                }
+            }
+
+            // Close modal only after success
+            setShowOrderModal(false);
+
         } catch (err) {
             console.error("Error creating order/payment:", err);
+            setOrderMessage("❌ Something went wrong. Please try again.");
+            setShowOrderMessage(true);
+            setTimeout(() => setShowOrderMessage(false), 3000);
         }
     };
 
@@ -418,6 +470,14 @@ function Homepage() {
                     </div>
                     )}
             </div>
+
+            {showOrderMessage && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+                    <div className="bg-white p-6 rounded shadow-lg flex items-center gap-3 pointer-events-auto">
+                        <span>{orderMessage}</span>
+                    </div>
+                </div>
+            )}
 
             {showOrderModal && (
                   <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-center z-50">
