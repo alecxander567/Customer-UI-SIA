@@ -14,7 +14,6 @@ Customer-UI-SIA is a simple and modern web application for managing customer inf
 - MySQL
 
 [![My Skills](https://skillicons.dev/icons?i=js,react,tailwind,java,spring,mysql)](https://skillicons.dev)
-<hr>
 
 ## Features
 
