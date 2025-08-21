@@ -1,12 +1,60 @@
-# React + Vite
+# Customer-UI-SIA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Customer-UI-SIA is a simple and modern web application for managing customer information and orders. It features a user-friendly front end and a robust backend, making it easy to view products, place orders, manage your cart, and analyze top-selling items.
 
-Currently, two official plugins are available:
+## Technologies Used
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**Front End:**
+- JavaScript
+- React
+- Tailwind CSS
 
-## Expanding the ESLint configuration
+**Back End:**
+- Java Spring Boot
+- MySQL
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+[![My Skills](https://skillicons.dev/icons?i=js,react,tailwind,java,spring,mysql)](https://skillicons.dev)
+
+## Backend Implementation Methods
+
+The backend is built with Spring Boot and exposes RESTful APIs for products, orders, and payments. Key methods and approaches include:
+
+- **Product Management:**
+  - `GET /api/items`: Fetch all products (with optional category filtering and search).
+  - `GET /api/items/search?name=...`: Search for products by name.
+  - `GET /api/items/{id}`: Get a single product by ID.
+
+- **Order Management:**
+  - `POST /api/orders`: Place a new order (with payload including product, customer, quantity, address, payment type, etc.).
+  - `GET /api/orders`: Fetch all orders for the current user.
+  - `DELETE /api/orders/{orderId}/cancel`: Cancel an order.
+
+- **Payment Integration:**
+  - `POST /payments/create-checkout`: Initiate an online test payment for an order; integrates with a test payment provider and redirects to a checkout URL.
+
+- **Cart & Customer Data:**
+  - Cart management is handled client-side, while orders and customer data are persisted server-side.
+  - Customer and order information is validated and securely transmitted using RESTful requests.
+
+- **Security & Data Management:**
+  - Product and order data are stored in a MySQL database and managed using JPA repositories.
+  - Data validation, error handling, and transactional integrity are enforced in the backend service layer.
+
+## Features
+
+- View all products available
+- Buy items using an online test payment
+- Edit existing orders
+- Cancel orders
+- Track order status
+- Add items to cart
+- Analyze top-selling items
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js and npm (for running the front end)
+- Java (for running the backend)
+- MySQL (for the database)
+
