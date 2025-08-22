@@ -88,7 +88,6 @@ function Homepage() {
             );
             const orderId = orderResponse.data.orderId;
 
-            // Handle payment
             if (orderForm.payment_type === "CashOnDelivery") {
                 const codResponse = await axios.post(
                     "http://localhost:8080/payments/create-checkout",
@@ -115,10 +114,18 @@ function Homepage() {
                             order_date: orderPayload.order_date,
                             employee_id: 1,
                             item_id: currentItem.id,
+                            item: { ...currentItem, quantity: currentItem.quantity - orderForm.quantity }, // update quantity
                             payment_type: "CashOnDelivery"
                         }
                     ]);
-                    setShowOrderModal(false); 
+
+                    setItems(prevItems => prevItems.map(i =>
+                        i.id === currentItem.id ? { ...i, quantity: i.quantity - orderForm.quantity } : i
+                    ));
+
+                    setCurrentItem(prev => ({ ...prev, quantity: prev.quantity - orderForm.quantity }));
+
+                    setShowOrderModal(false);
                     setAlertMessage("Order placed successfully! Please prepare cash on delivery.");
                     setTimeout(() => setAlertMessage(""), 3000);
                 } else {
@@ -126,16 +133,16 @@ function Homepage() {
                     setShowOrderMessage(true);
                     setTimeout(() => setShowOrderMessage(false), 3000);
                 }
-            } else {
-                const paymentResponse = await axios.post(
-                    "http://localhost:8080/payments/create-checkout",
-                    {
-                        amount: Number(orderPayload.total_price),
-                        productId: Number(currentItem.id),
-                        orderId: Number(orderId),
-                        paymentType: orderForm.payment_type
-                    }
-                );
+                } else {
+                    const paymentResponse = await axios.post(
+                        "http://localhost:8080/payments/create-checkout",
+                        {
+                            amount: Number(orderPayload.total_price),
+                            productId: Number(currentItem.id),
+                            orderId: Number(orderId),
+                            paymentType: orderForm.payment_type
+                        }
+                    );
 
                 if (paymentResponse.data.checkoutUrl) {
                     window.location.href = paymentResponse.data.checkoutUrl;
@@ -252,18 +259,12 @@ function Homepage() {
 
     const handleDelivered = async (orderId) => {
         try {
-            const response = await axios.put(
-            `http://localhost:8080/api/orders/${orderId}/delivered`
+            const response = await axios.put(`http://localhost:8080/api/orders/${orderId}/delivered`);
+            setOrders(prev =>
+                prev.map(o => o.orderId === orderId ? { ...o, status: "Delivered" } : o)
             );
-
-            // update state with new status
-            setOrders((prevOrders) =>
-            prevOrders.map((o) =>
-                o.orderId === orderId ? response.data : o
-            )
-            );
-        } catch (error) {
-            console.error("Error marking order as delivered:", error);
+        } catch (err) {
+            console.error("Error marking delivered:", err);
         }
     };
 
