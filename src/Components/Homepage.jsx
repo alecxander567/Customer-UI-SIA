@@ -23,17 +23,34 @@ function Homepage() {
     });
     const [activeSection, setActiveSection] = useState("store");
     const [orders, setOrders] = useState([]);
+    const [cart, setCart] = useState(() => {
+    const savedCart = localStorage.getItem("cart");
+        return savedCart ? JSON.parse(savedCart) : [];
+    });
+    const [editingOrder, setEditingOrder] = useState(null);
+    const [newQuantity, setNewQuantity] = useState(1);
+    const [newAddress, setNewAddress] = useState("");
 
-    useEffect(() => {
-        axios.get("http://localhost:8080/api/items")
-            .then(response => {
-            console.log("Items from API:", response.data); 
+    const fetchItems = async () => {
+        try {
+            let url = "http://localhost:8080/api/items";
+            let params = {};
+
+            if (category && category !== "All Categories") {
+            params.category = category;
+            }
+
+            if (searchQuery) {
+            url = "http://localhost:8080/api/items/search";
+            params.name = searchQuery;
+            }
+
+            const response = await axios.get(url, { params });
             setItems(response.data);
-            })
-            .catch(error => {
+        } catch (error) {
             console.error("Error fetching items:", error);
-            });
-    }, []);
+        }
+    };
 
     const handleItemQuantityUpdate = (itemId, change) => {
         setItems((prevItems) =>
@@ -45,40 +62,8 @@ function Homepage() {
         );
     };
 
-    // Fetch items whenever the category changes
     useEffect(() => {
-        const url =
-        category && category !== "All Categories"
-            ? `http://localhost:8080/api/items?category=${category}`
-            : "http://localhost:8080/api/items";
-
-        axios
-        .get(url)
-        .then((response) => {
-            setItems(response.data);
-        })
-        .catch((error) => {
-            console.error("Error fetching items:", error);
-        });
-    }, [category]);
-
-    useEffect(() => {
-        let url = "http://localhost:8080/api/items";
-        let params = {};
-
-        if (category && category !== "All Categories") {
-            params.category = category;
-        }
-
-        if (searchQuery) {
-            url = "http://localhost:8080/api/items/search";
-            params.name = searchQuery;
-        }
-
-        axios
-            .get(url, { params })
-            .then((response) => setItems(response.data))
-            .catch((error) => console.error("Error fetching items:", error));
+        fetchItems();
     }, [category, searchQuery]);
 
     const handleOrderSubmit = async () => {
@@ -161,7 +146,6 @@ function Homepage() {
                 }
             }
 
-            // Close modal only after success
             setShowOrderModal(false);
 
         } catch (err) {
@@ -175,17 +159,6 @@ function Homepage() {
     const handleBuyNowClick = (item) => {
         setCurrentItem(item);
         setShowOrderModal(true);
-    };
-
-    const checkout = async (item, quantity) => {
-        const amountInCentavos = item.price * quantity * 100;
-
-        const response = await axios.post("http://localhost:8080/payments/create-checkout", {
-            amount: amountInCentavos,
-            productId: item.id
-        });
-
-        window.location.href = response.data.checkoutUrl;
     };
 
     useEffect(() => {
@@ -215,6 +188,82 @@ function Homepage() {
 
             setAlertMessage("Failed to cancel order");
             setTimeout(() => setAlertMessage(""), 3000);
+        }
+    };
+
+    useEffect(() => {
+        localStorage.setItem("cart", JSON.stringify(cart));
+    }, [cart]);
+
+    const handleAddToCart = (item) => {
+        const newCartItem = {
+            cartId: Date.now(),
+            item: item,
+            quantity: 1,
+            total_price: item.price,
+        };
+
+        setCart((prev) => [...prev, newCartItem]);
+
+        setOrderMessage(
+            `✅ ${item.itemName} (₱${item.price}) added to cart successfully!`
+        );
+        setShowOrderMessage(true);
+
+        setTimeout(() => {
+            setShowOrderMessage(false);
+        }, 2000);
+        };
+
+        const handleRemoveFromCart = (cartId) => {
+        setCart((prev) => prev.filter((c) => c.cartId !== cartId));
+    };
+
+    const handleEdit = (order) => {
+        setEditingOrder(order);
+        setNewQuantity(order.quantity);
+        setNewAddress(order.address || "");
+        };
+
+    const handleSaveEdit = async () => {
+        try {
+            const response = await axios.put(
+            `http://localhost:8080/api/orders/${editingOrder.orderId}`,
+            {
+                ...editingOrder,
+                quantity: newQuantity,
+                address: newAddress,
+            }
+            );
+
+            setOrders((prevOrders) =>
+            prevOrders.map((o) =>
+                o.orderId === editingOrder.orderId ? response.data : o
+            )
+            );
+
+            await fetchItems();
+
+            setEditingOrder(null);
+        } catch (error) {
+            console.error("Error updating order:", error);
+        }
+    };
+
+    const handleDelivered = async (orderId) => {
+        try {
+            const response = await axios.put(
+            `http://localhost:8080/api/orders/${orderId}/delivered`
+            );
+
+            // update state with new status
+            setOrders((prevOrders) =>
+            prevOrders.map((o) =>
+                o.orderId === orderId ? response.data : o
+            )
+            );
+        } catch (error) {
+            console.error("Error marking order as delivered:", error);
         }
     };
 
@@ -312,13 +361,15 @@ function Homepage() {
                     <Package className="w-5 h-5" />
                     My Orders
                     </button>
-                    <a
-                    href="#cart"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium transition"
+                   <button
+                    onClick={() => setActiveSection("cart")}
+                    className={`flex items-center gap-2 font-medium transition ${
+                        activeSection === "cart" ? "text-blue-600" : "text-gray-700 hover:text-blue-600"
+                    }`}
                     >
                     <ShoppingCart className="w-5 h-5" />
                     Cart
-                    </a>
+                    </button>
                     <a
                     href="#top-selling"
                     className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium transition"
@@ -382,8 +433,11 @@ function Homepage() {
                             <p className="text-xl font-bold mt-2">₱{item.price}</p>
                             <p className="text-sm text-gray-500">Stock: {item.quantity}</p>
                             <div className="flex gap-2 mt-3">
-                            <button className="flex-1 bg-gray-300 text-black py-2 rounded-xl hover:bg-gray-400 transition">
-                                Add to Cart
+                            <button
+                            className="flex-1 bg-gray-300 text-black py-2 rounded-xl hover:bg-gray-400 transition"
+                            onClick={() => handleAddToCart(item)}
+                            >
+                            Add to Cart
                             </button>
                             <button
                                 className="flex-1 bg-black text-white py-2 rounded-xl hover:bg-gray-800 transition"
@@ -403,8 +457,12 @@ function Homepage() {
                         {orders.length > 0 ? (
                             orders.map((order) => (
                                 <div
-                                key={order.orderId}
-                                className="bg-white shadow rounded-xl p-4 flex justify-between items-start"
+                                    key={order.orderId}
+                                    className={`shadow rounded-xl p-4 flex justify-between items-start ${
+                                        order.status === "Delivered"
+                                        ? "bg-green-100 border border-green-300"
+                                        : "bg-white"
+                                    }`}
                                 >
                                 {/* Left Section: Image + Details */}
                                 <div className="flex items-start gap-4">
@@ -456,10 +514,10 @@ function Homepage() {
                                     Edit
                                     </button>
                                     <button
-                                    className="px-3 py-1 border border-green-500 text-green-500 rounded-lg hover:bg-green-50"
-                                    onClick={() => handleDelivered(order.order_id)}
+                                        className="px-3 py-1 border border-green-500 text-green-500 rounded-lg hover:bg-green-50"
+                                        onClick={() => handleDelivered(order.orderId)} 
                                     >
-                                    Delivered
+                                        Delivered
                                     </button>
                                 </div>
                             </div>
@@ -469,6 +527,75 @@ function Homepage() {
                         )}
                     </div>
                     )}
+
+                    {showOrderMessage && (
+                        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+                        <div className="bg-white p-6 rounded shadow-lg flex items-center gap-3 pointer-events-auto">
+                            <span>{orderMessage}</span>
+                        </div>
+                        </div>
+                    )}
+
+                    {activeSection === "cart" && (
+                    <div className="space-y-4">
+                    {cart.length > 0 ? (
+                    cart.map((cartItem) => (
+                        <div
+                        key={cartItem.cartId}
+                        className="bg-white shadow rounded-xl p-4 flex justify-between items-start"
+                        >
+                        {/* Left Section: Image + Details */}
+                        <div className="flex items-start gap-4">
+                            {/* Item Image */}
+                            {cartItem.item?.imagePath ? (
+                            <img
+                                src={`http://localhost:8080/${cartItem.item.imagePath.replace(/\\/g, "/")}`}
+                                alt={cartItem.item.itemName}
+                                className="w-40 h-40 rounded-lg"
+                            />
+                            ) : (
+                            <div className="w-40 h-40 bg-gray-200 flex items-center justify-center rounded-lg">
+                                No Image
+                            </div>
+                            )}
+
+                            {/* Cart Item Details */}
+                            <div>
+                            <h3 className="text-lg font-bold">
+                                {cartItem.item?.itemName || "No Item"}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                                Category: {cartItem.item?.category || "N/A"}
+                            </p>
+                            <p className="text-sm text-gray-800 font-semibold">
+                                Total: ₱{cartItem.total_price}
+                            </p>
+                            </div>
+                        </div>
+
+                        {/* Right Section: Action Buttons */}
+                        <div className="flex flex-row gap-2 self-end">
+                            <button
+                            className="px-3 py-1 border border-red-500 text-red-500 rounded-lg hover:bg-red-50"
+                            onClick={() => handleRemoveFromCart(cartItem.cartId)}
+                            >
+                            Remove
+                            </button>
+                            <button
+                            className="px-3 py-1 border border-green-500 text-green-500 rounded-lg hover:bg-green-50"
+                            onClick={() => setActiveSection("store")}
+                            >
+                            Checkout
+                            </button>
+                        </div>
+                        </div>
+                    ))
+                    ) : (
+                    <p className="text-gray-600">Your cart is empty.</p>
+                    )}
+                </div>
+                )}
+
             </div>
 
             {showOrderMessage && (
@@ -615,6 +742,45 @@ function Homepage() {
                             Proceed to Payment
                         </button>
                     </div>
+                </div>
+            </div>
+            )}
+
+           {editingOrder && (
+            <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 backdrop-blur-sm z-50">
+                <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+                <h2 className="text-lg font-bold mb-4">Edit Order</h2>
+
+                <label className="block mb-2 text-sm">Quantity</label>
+                <input
+                    type="number"
+                    value={newQuantity}
+                    onChange={(e) => setNewQuantity(e.target.value)}
+                    className="w-full border px-3 py-2 rounded mb-4"
+                />
+
+                <label className="block mb-2 text-sm">Address</label>
+                <input
+                    type="text"
+                    value={newAddress}
+                    onChange={(e) => setNewAddress(e.target.value)}
+                    className="w-full border px-3 py-2 rounded mb-4"
+                />
+
+                <div className="flex justify-end gap-2">
+                    <button
+                    className="px-3 py-1 border border-gray-500 text-gray-500 rounded-lg hover:bg-gray-50"
+                    onClick={() => setEditingOrder(null)}
+                    >
+                    Cancel
+                    </button>
+                    <button
+                    className="px-3 py-1 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50"
+                    onClick={handleSaveEdit}
+                    >
+                    Save
+                    </button>
+                </div>
                 </div>
             </div>
             )}
