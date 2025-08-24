@@ -3,6 +3,16 @@ import '../index.css'
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from "react";
 import axios from "axios";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+} from "recharts";
+
 
 function Homepage() {
     const [items, setItems] = useState([]);
@@ -30,6 +40,9 @@ function Homepage() {
     const [editingOrder, setEditingOrder] = useState(null);
     const [newQuantity, setNewQuantity] = useState(1);
     const [newAddress, setNewAddress] = useState("");
+    const [topSellingData, setTopSellingData] = useState([]);
+    const [phone, setPhone] = useState("");
+
 
     const fetchItems = async () => {
         try {
@@ -76,7 +89,7 @@ function Homepage() {
                 unit: orderForm.unit,
                 total_price: currentItem.price * orderForm.quantity,
                 address: orderForm.address,
-                contact_number: orderForm.contact_number,
+                contactNumber: orderForm.contact_number,
                 order_date: new Date().toISOString().split("T")[0],
                 employee_id: 1,
                 payment_type: orderForm.payment_type
@@ -110,7 +123,7 @@ function Homepage() {
                             unit: orderForm.unit,
                             total_price: orderPayload.total_price,
                             address: orderForm.address,
-                            contact_number: orderForm.contact_number,
+                            contactNumber: orderForm.contact_number,
                             order_date: orderPayload.order_date,
                             employee_id: 1,
                             item_id: currentItem.id,
@@ -168,15 +181,15 @@ function Homepage() {
         setShowOrderModal(true);
     };
 
-    useEffect(() => {
-        axios.get("http://localhost:8080/api/orders")
-        .then(response => {
-            setOrders(response.data);
-        })
-        .catch(error => {
+    const fetchOrdersByPhone = async () => {
+        try {
+            const res = await axios.get(`http://localhost:8080/api/orders/by-phone/${phone}`);
+            setOrders(res.data);
+        } catch (error) {
             console.error("Error fetching orders:", error);
-        });
-    }, []); 
+            setOrders([]); 
+        }
+    };
 
     // handleCancel function
     const handleCancel = async (orderId, itemId) => {
@@ -243,14 +256,25 @@ function Homepage() {
             }
             );
 
+            const updatedOrder = {
+            orderNo: response.data.orderId,
+            item: response.data.item?.itemName || "N/A",
+            customer: response.data.customer_name,
+            quantity: response.data.quantity,
+            price: `₱${response.data.total_price}`,
+            address: response.data.address,
+            payment: response.data.payment_type,
+            date: response.data.order_date,
+            status: response.data.status || "Pending",
+            };
+
             setOrders((prevOrders) =>
             prevOrders.map((o) =>
-                o.orderId === editingOrder.orderId ? response.data : o
+                o.orderNo === updatedOrder.orderNo ? updatedOrder : o
             )
             );
 
             await fetchItems();
-
             setEditingOrder(null);
         } catch (error) {
             console.error("Error updating order:", error);
@@ -267,6 +291,24 @@ function Homepage() {
             console.error("Error marking delivered:", err);
         }
     };
+
+    useEffect(() => {
+        axios
+            .get("https://kind-beers-rescue.loca.lt/")
+            .then((res) => {
+            // Transform API data
+            const transformed = res.data.map((entry) => ({
+                id: entry.item.id,
+                name: entry.item.itemName,
+                percentage: parseFloat(entry.item.percentage),
+                sales: parseInt(entry.item.quantity, 10), // use quantity as "sales"
+                image: entry.item.imagePath, // may be null
+            }));
+
+            setTopSellingData(transformed);
+            })
+            .catch((err) => console.error("Error fetching top selling items:", err));
+    }, []);
 
     return(
         <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -371,13 +413,17 @@ function Homepage() {
                     <ShoppingCart className="w-5 h-5" />
                     Cart
                     </button>
-                    <a
-                    href="#top-selling"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium transition"
+                    <button
+                        onClick={() => setActiveSection("topSelling")}
+                        className={`flex items-center gap-2 font-medium transition ${
+                        activeSection === "topSelling"
+                            ? "text-blue-600"
+                            : "text-gray-700 hover:text-blue-600"
+                        }`}
                     >
-                    <TrendingUp className="w-5 h-5" />
-                    Top Selling
-                    </a>
+                        <TrendingUp className="w-5 h-5" />
+                        Top Selling
+                    </button>
                 </div>
             </nav>
 
@@ -455,72 +501,89 @@ function Homepage() {
 
                 {activeSection === "orders" && (
                     <div className="space-y-4">
+                        {/* Always show phone number input */}
+                        <div className="mb-4 flex items-center gap-2">
+                        <input
+                            type="text"
+                            placeholder="Enter your phone number"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className="border p-2 rounded flex-grow"
+                        />
+                        <button
+                            onClick={fetchOrdersByPhone}
+                            className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
+                        >
+                            View My Orders
+                        </button>
+                        </div>
+
+                        {/* Show orders if available */}
                         {orders.length > 0 ? (
-                            orders.map((order) => (
-                                <div
-                                    key={order.orderId}
-                                    className={`shadow rounded-xl p-4 flex justify-between items-start ${
-                                        order.status === "Delivered"
-                                        ? "bg-green-100 border border-green-300"
-                                        : "bg-white"
-                                    }`}
+                        orders.map((order) => (
+                            <div
+                            key={order.orderId}
+                            className={`shadow rounded-xl p-4 flex justify-between items-start ${
+                                order.status === "Delivered"
+                                ? "bg-green-100 border border-green-300"
+                                : "bg-white"
+                            }`}
+                            >
+                            {/* Left Section: Image + Details */}
+                            <div className="flex items-start gap-4">
+                                {order.item ? (
+                                <img
+                                    src={`http://localhost:8080/${order.item.imagePath.replace(/\\/g, "/")}`}
+                                    alt={order.item.itemName}
+                                    className="w-40 h-40 rounded-lg"
+                                />
+                                ) : (
+                                <div className="w-40 h-40 bg-gray-200 flex items-center justify-center rounded-lg">
+                                    No Image
+                                </div>
+                                )}
+                                <div>
+                                <h3 className="text-lg font-bold">
+                                    {order.item ? order.item.itemName : "No Item"}
+                                </h3>
+                                <p className="text-sm text-gray-600">Customer: {order.customer_name}</p>
+                                <p className="text-sm text-gray-600">Quantity: {order.quantity}</p>
+                                <p className="text-sm text-gray-600">
+                                    Payment:{" "}
+                                    {order.payment_type === "CashOnDelivery"
+                                    ? "Cash on Delivery"
+                                    : order.payment_type || "Cash on Delivery"}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                    Status: {order.status || "Pending"}
+                                </p>
+                                <p className="text-sm text-gray-800 font-semibold">
+                                    Total: ₱{order.total_price}
+                                </p>
+                                </div>
+                            </div>
+
+                            {/* Right Section: Actions */}
+                            <div className="flex flex-row gap-2 self-end">
+                                <button
+                                className="px-3 py-1 border border-red-500 text-red-500 rounded-lg hover:bg-red-50"
+                                onClick={() => handleCancel(order.orderId, order.item.id)}
                                 >
-                                {/* Left Section: Image + Details */}
-                                <div className="flex items-start gap-4">
-                                    {/* Item Image */}
-                                    {order.item ? (
-                                    <img
-                                        src={`http://localhost:8080/${order.item.imagePath.replace(/\\/g, "/")}`}
-                                        alt={order.item.itemName}
-                                        className="w-40 h-40 rounded-lg"
-                                    />
-                                    ) : (
-                                    <div className="w-40 h-40 bg-gray-200 flex items-center justify-center rounded-lg">
-                                        No Image
-                                    </div>
-                                    )}
-
-                                    {/* Order Details */}
-                                    <div>
-                                    <h3 className="text-lg font-bold">
-                                        {order.item ? order.item.itemName : "No Item"}
-                                    </h3>
-                                    <p className="text-sm text-gray-600">Customer: {order.customer_name}</p>
-                                    <p className="text-sm text-gray-600">Quantity: {order.quantity}</p>
-                                    <p className="text-sm text-gray-600">
-                                        Payment:{" "}
-                                        {order.payment_type === "CashOnDelivery"
-                                        ? "Cash on Delivery"
-                                        : order.payment_type || "Cash on Delivery"}
-                                    </p>
-                                    <p className="text-sm text-gray-600">Status: {order.status || "Pending"}</p>
-                                    <p className="text-sm text-gray-800 font-semibold">
-                                        Total: ₱{order.total_price}
-                                    </p>
-                                    </div>
-                                </div>
-
-                                {/* Right Section: Action Buttons */}
-                                <div className="flex flex-row gap-2 self-end">
-                                    <button
-                                        className="px-3 py-1 border border-red-500 text-red-500 rounded-lg hover:bg-red-50"
-                                        onClick={() => handleCancel(order.orderId, order.item.id)}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                    className="px-3 py-1 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50"
-                                    onClick={() => handleEdit(order)}
-                                    >
-                                    Edit
-                                    </button>
-                                    <button
-                                        className="px-3 py-1 border border-green-500 text-green-500 rounded-lg hover:bg-green-50"
-                                        onClick={() => handleDelivered(order.orderId)} 
-                                    >
-                                        Delivered
-                                    </button>
-                                </div>
+                                Cancel
+                                </button>
+                                <button
+                                className="px-3 py-1 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50"
+                                onClick={() => handleEdit(order)}
+                                >
+                                Edit
+                                </button>
+                                <button
+                                className="px-3 py-1 border border-green-500 text-green-500 rounded-lg hover:bg-green-50"
+                                onClick={() => handleDelivered(order.orderId)}
+                                >
+                                Delivered
+                                </button>
+                            </div>
                             </div>
                         ))
                         ) : (
@@ -597,6 +660,78 @@ function Homepage() {
                 </div>
                 )}
 
+               {activeSection === "topSelling" && (
+                <div className="mt-10">
+                    {/* Chart */}
+                    <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={topSellingData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <defs>
+                        <linearGradient id="redOrangeGradient" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#ff0000" />
+                            <stop offset="100%" stopColor="#ffa500" />
+                        </linearGradient>
+                        </defs>
+                        <Bar
+                        dataKey="sales"
+                        fill="url(#redOrangeGradient)"
+                        radius={[8, 8, 0, 0]}
+                        />
+                    </BarChart>
+                    </ResponsiveContainer>
+
+                    {/* Top items cards */}
+                    <div className="flex flex-col gap-4 mt-6">
+                    {topSellingData.slice(0, 5).map((item, index) => (
+                        <div
+                        key={index}
+                        className="w-full bg-white p-4 rounded-xl shadow-md flex gap-4"
+                        >
+                        {/* Item image or placeholder */}
+                        {item.image ? (
+                            <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-40 h-40 rounded-lg"
+                            />
+                        ) : (
+                            <div className="w-40 h-40 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500">
+                            📦
+                            </div>
+                        )}
+
+                        {/* Item details + button */}
+                        <div className="flex-1 flex flex-col justify-between">
+                            <div>
+                            <h3 className="text-lg font-semibold text-gray-800">
+                                {item.name}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                                Percentage: {item.percentage}%
+                            </p>
+                            <p className="text-sm font-medium text-gray-700">
+                                Sold: {item.sales}
+                            </p>
+                            </div>
+
+                            {/* Checkout button */}
+                            <div className="flex justify-end mt-3">
+                            <button
+                                onClick={() => setActiveSection("store")}
+                                className="px-3 py-1 border border-green-500 text-green-500 rounded-lg hover:bg-green-50"
+                            >
+                                Checkout
+                            </button>
+                            </div>
+                        </div>
+                        </div>
+                    ))}
+                    </div>
+                </div>
+                )}
             </div>
 
             {showOrderMessage && (
