@@ -43,7 +43,6 @@ function Homepage() {
     const [topSellingData, setTopSellingData] = useState([]);
     const [phone, setPhone] = useState("");
 
-
     const fetchItems = async () => {
         try {
             let url = "http://localhost:8080/api/items";
@@ -77,6 +76,12 @@ function Homepage() {
 
     useEffect(() => {
         fetchItems();
+
+        const interval = setInterval(() => {
+            fetchItems();
+        }, 5000);
+
+        return () => clearInterval(interval);
     }, [category, searchQuery]);
 
     const handleOrderSubmit = async () => {
