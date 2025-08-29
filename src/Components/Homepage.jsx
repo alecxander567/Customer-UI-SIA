@@ -13,7 +13,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-
 function Homepage() {
     const [items, setItems] = useState([]);
     const [category, setCategory] = useState("All Categories");
