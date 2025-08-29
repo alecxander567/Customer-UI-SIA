@@ -45,7 +45,7 @@ function Homepage() {
 
     const fetchItems = async () => {
         try {
-            let url = "http://localhost:8080/api/items";
+            let url = "https://tame-rice-hear.loca.lt/api/items";
             let params = {};
 
             if (category && category !== "All Categories") {
@@ -53,7 +53,7 @@ function Homepage() {
             }
 
             if (searchQuery) {
-            url = "http://localhost:8080/api/items/search";
+            url = "https://tame-rice-hear.loca.lt/api/items/search";
             params.name = searchQuery;
             }
 
@@ -101,14 +101,14 @@ function Homepage() {
             };
 
             const orderResponse = await axios.post(
-                "http://localhost:8080/api/orders",
+                "https://tame-rice-hear.loca.lt/api/orders",
                 orderPayload
             );
             const orderId = orderResponse.data.orderId;
 
             if (orderForm.payment_type === "CashOnDelivery") {
                 const codResponse = await axios.post(
-                    "http://localhost:8080/payments/create-checkout",
+                    "https://tame-rice-hear.loca.lt/payments/create-checkout",
                     {
                         amount: Number(orderPayload.total_price),
                         productId: Number(currentItem.id),
@@ -153,7 +153,7 @@ function Homepage() {
                 }
                 } else {
                     const paymentResponse = await axios.post(
-                        "http://localhost:8080/payments/create-checkout",
+                        "https://tame-rice-hear.loca.lt/payments/create-checkout",
                         {
                             amount: Number(orderPayload.total_price),
                             productId: Number(currentItem.id),
@@ -188,7 +188,7 @@ function Homepage() {
 
     const fetchOrdersByPhone = async () => {
         try {
-            const res = await axios.get(`http://localhost:8080/api/orders/by-phone/${phone}`);
+            const res = await axios.get(`https://tame-rice-hear.loca.lt/api/orders/by-phone/${phone}`);
             setOrders(res.data);
         } catch (error) {
             console.error("Error fetching orders:", error);
@@ -199,7 +199,7 @@ function Homepage() {
     // handleCancel function
     const handleCancel = async (orderId, itemId) => {
         try {
-            await axios.delete(`http://localhost:8080/api/orders/${orderId}/cancel`);
+            await axios.delete(`https://tame-rice-hear.loca.lt/api/orders/${orderId}/cancel`);
 
             setAlertMessage("Order cancelled successfully");
 
@@ -253,7 +253,7 @@ function Homepage() {
     const handleSaveEdit = async () => {
         try {
             const response = await axios.put(
-            `http://localhost:8080/api/orders/${editingOrder.orderId}`,
+            `https://tame-rice-hear.loca.lt/api/orders/${editingOrder.orderId}`,
             {
                 ...editingOrder,
                 quantity: newQuantity,
@@ -288,7 +288,7 @@ function Homepage() {
 
     const handleDelivered = async (orderId) => {
         try {
-            const response = await axios.put(`http://localhost:8080/api/orders/${orderId}/delivered`);
+            const response = await axios.put(`https://tame-rice-hear.loca.lt/api/orders/${orderId}/delivered`);
             setOrders(prev =>
                 prev.map(o => o.orderId === orderId ? { ...o, status: "Delivered" } : o)
             );
@@ -474,7 +474,7 @@ function Homepage() {
                     {items.map((item) => (
                         <div key={item.id} className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-200">
                         <img
-                            src={`http://localhost:8080/${item.imagePath.replace(/\\/g, "/")}`}
+                            src={`https://tame-rice-hear.loca.lt/${item.imagePath.replace(/\\/g, "/")}`}
                             alt={item.itemName}
                             className="w-full h-40"
                         />
@@ -538,7 +538,7 @@ function Homepage() {
                             <div className="flex items-start gap-4">
                                 {order.item ? (
                                 <img
-                                    src={`http://localhost:8080/${order.item.imagePath.replace(/\\/g, "/")}`}
+                                    src={`https://tame-rice-hear.loca.lt/${order.item.imagePath.replace(/\\/g, "/")}`}
                                     alt={order.item.itemName}
                                     className="w-40 h-40 rounded-lg"
                                 />
@@ -618,7 +618,7 @@ function Homepage() {
                             {/* Item Image */}
                             {cartItem.item?.imagePath ? (
                             <img
-                                src={`http://localhost:8080/${cartItem.item.imagePath.replace(/\\/g, "/")}`}
+                                src={`https://tame-rice-hear.loca.lt/${cartItem.item.imagePath.replace(/\\/g, "/")}`}
                                 alt={cartItem.item.itemName}
                                 className="w-40 h-40 rounded-lg"
                             />
