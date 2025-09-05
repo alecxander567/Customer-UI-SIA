@@ -322,17 +322,19 @@ function Homepage() {
 
   useEffect(() => {
     axios
-      .get("https://kind-beers-rescue.loca.lt/")
+      .get("https://mean-pears-brake.loca.lt/")
       .then((res) => {
-        // Transform API data
         const transformed = res.data.map((entry) => ({
           id: entry.item.id,
           name: entry.item.itemName,
           percentage: parseFloat(entry.item.percentage),
-          sales: parseInt(entry.item.quantity, 10), // use quantity as "sales"
-          image: entry.item.imagePath, // may be null
+          sales: parseInt(entry.item.quantity, 10),
+          image: entry.item.imagePath
+            ? entry.item.imagePath.replace(/%5C/g, "/")
+            : null,
         }));
 
+        console.log("Transformed data:", transformed);
         setTopSellingData(transformed);
       })
       .catch((err) => console.error("Error fetching top selling items:", err));
@@ -747,7 +749,6 @@ function Homepage() {
                   key={index}
                   className="w-full bg-white p-4 rounded-xl shadow-md flex gap-4"
                 >
-                  {/* Item image or placeholder */}
                   {item.image ? (
                     <img
                       src={item.image}
@@ -760,7 +761,6 @@ function Homepage() {
                     </div>
                   )}
 
-                  {/* Item details + button */}
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">
@@ -774,7 +774,6 @@ function Homepage() {
                       </p>
                     </div>
 
-                    {/* Checkout button */}
                     <div className="flex justify-end mt-3">
                       <button
                         onClick={() => setActiveSection("store")}
