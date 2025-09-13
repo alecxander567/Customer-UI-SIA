@@ -7,7 +7,6 @@ import {
   TrendingUp,
 } from "lucide-react";
 import "../index.css";
-import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import {
@@ -19,6 +18,18 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
+import {
+  FaSearch,
+  FaUser,
+  FaBox,
+  FaTruck,
+  FaMapMarkerAlt,
+  FaPhone,
+  FaCreditCard,
+  FaTimes,
+  FaEdit,
+  FaCheckCircle,
+} from "react-icons/fa";
 
 function Homepage() {
   const [items, setItems] = useState([]);
@@ -53,23 +64,19 @@ function Homepage() {
     try {
       let url = "http://localhost:8080/api/items";
       let params = {};
-
       if (category && category !== "All Categories") {
         params.category = category;
       }
-
       if (searchQuery) {
         url = "http://localhost:8080/api/items/search";
         params.name = searchQuery;
       }
-
       const response = await axios.get(url, { params });
       setItems(response.data);
     } catch (error) {
       console.error("Error fetching items:", error);
     }
   };
-
   const handleItemQuantityUpdate = (itemId, change) => {
     setItems((prevItems) =>
       prevItems.map((item) =>
@@ -82,11 +89,9 @@ function Homepage() {
 
   useEffect(() => {
     fetchItems();
-
     const interval = setInterval(() => {
       fetchItems();
     }, 5000);
-
     return () => clearInterval(interval);
   }, [category, searchQuery]);
 
@@ -141,7 +146,7 @@ function Homepage() {
               item: {
                 ...currentItem,
                 quantity: currentItem.quantity - orderForm.quantity,
-              }, // update quantity
+              },
               payment_type: "CashOnDelivery",
             },
           ]);
@@ -322,17 +327,19 @@ function Homepage() {
 
   useEffect(() => {
     axios
-      .get("https://kind-beers-rescue.loca.lt/")
+      .get("https://mean-pears-brake.loca.lt/")
       .then((res) => {
-        // Transform API data
         const transformed = res.data.map((entry) => ({
           id: entry.item.id,
           name: entry.item.itemName,
           percentage: parseFloat(entry.item.percentage),
-          sales: parseInt(entry.item.quantity, 10), // use quantity as "sales"
-          image: entry.item.imagePath, // may be null
+          sales: parseInt(entry.item.quantity, 10),
+          image: entry.item.imagePath
+            ? entry.item.imagePath.replace(/%5C/g, "/")
+            : null,
         }));
 
+        console.log("Transformed data:", transformed);
         setTopSellingData(transformed);
       })
       .catch((err) => console.error("Error fetching top selling items:", err));
@@ -352,28 +359,15 @@ function Homepage() {
         </h1>
 
         {/* Search Bar */}
-        <div className="relative w-full max-w-md">
+        <div className="relative w-80 mb-4">
           <input
             type="text"
-            placeholder="Search..."
-            className="w-full pl-3 pr-9 py-1.5 text-sm border border-gray-600 bg-gray-900 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Search an item..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-md border border-blue-400 text-white bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.75 10.5a7.5 7.5 0 0012.9 6.15z"
-            />
-          </svg>
+          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white" />
         </div>
       </header>
 
@@ -508,7 +502,7 @@ function Homepage() {
                     "/"
                   )}`}
                   alt={item.itemName}
-                  className="w-full h-40"
+                  className="w-full h-50"
                 />
                 <div className="p-4">
                   <h3 className="text-lg font-semibold">{item.itemName}</h3>
@@ -542,7 +536,6 @@ function Homepage() {
 
         {activeSection === "orders" && (
           <div className="space-y-4">
-            {/* Always show phone number input */}
             <div className="mb-4 flex items-center gap-2">
               <input
                 type="text"
@@ -559,7 +552,6 @@ function Homepage() {
               </button>
             </div>
 
-            {/* Show orders if available */}
             {orders.length > 0 ? (
               orders.map((order) => (
                 <div
@@ -579,56 +571,100 @@ function Homepage() {
                           "/"
                         )}`}
                         alt={order.item.itemName}
-                        className="w-40 h-40 rounded-lg"
+                        className="w-50 h-40 rounded-lg"
                       />
                     ) : (
                       <div className="w-40 h-40 bg-gray-200 flex items-center justify-center rounded-lg">
                         No Image
                       </div>
                     )}
-                    <div>
+                    {/* Order Details */}
+                    <div className="mb-4 text-gray-700 text-base space-y-2 relative z-10">
                       <h3 className="text-lg font-bold">
                         {order.item ? order.item.itemName : "No Item"}
                       </h3>
-                      <p className="text-sm text-gray-600">
-                        Customer: {order.customer_name}
+
+                      <p className="flex items-center gap-2">
+                        <FaUser className="text-blue-500" />
+                        <span className="font-semibold">
+                          {order.customer_name}
+                        </span>
                       </p>
-                      <p className="text-sm text-gray-600">
-                        Quantity: {order.quantity}
+
+                      <p className="flex items-center gap-2">
+                        <FaBox className="text-yellow-500" />
+                        <span className="font-semibold">
+                          {order.quantity} {order.unit || ""}
+                        </span>
                       </p>
-                      <p className="text-sm text-gray-600">
-                        Payment:{" "}
-                        {order.payment_type === "CashOnDelivery"
-                          ? "Cash on Delivery"
-                          : order.payment_type || "Cash on Delivery"}
+
+                      <p className="flex items-center gap-2">
+                        <span className="text-indigo-400 font-bold text-lg">
+                          ₱
+                        </span>
+                        <span className="font-semibold">
+                          {Number(order.total_price).toFixed(2)}
+                        </span>
                       </p>
-                      <p className="text-sm text-gray-600">
-                        Status: {order.status || "Pending"}
+
+                      <p className="flex items-center gap-2">
+                        <FaTruck className="text-green-500" />
+                        <span className="font-semibold">
+                          {order.status || "Pending"}
+                        </span>
                       </p>
-                      <p className="text-sm text-gray-800 font-semibold">
-                        Total: ₱{order.total_price}
+
+                      <p className="flex items-center gap-2 pr-16">
+                        <FaMapMarkerAlt className="text-red-500" />
+                        <span className="font-semibold break-words whitespace-normal">
+                          {order.address}
+                        </span>
+                      </p>
+
+                      <p className="flex items-center gap-2">
+                        <FaPhone className="text-purple-500" />
+                        <span className="font-semibold">
+                          {order.contactNumber}
+                        </span>
+                      </p>
+
+                      <p className="flex items-center gap-2">
+                        <FaCreditCard className="text-pink-500" />
+                        <span className="font-semibold">
+                          {order.payment_type === "CashOnDelivery"
+                            ? "Cash on Delivery"
+                            : order.payment_type || "Cash on Delivery"}
+                        </span>
                       </p>
                     </div>
                   </div>
 
                   {/* Right Section: Actions */}
-                  <div className="flex flex-row gap-2 self-end">
+                  <div className="flex flex-row gap-2 self-end mt-70">
                     <button
-                      className="px-3 py-1 border border-red-500 text-red-500 rounded-lg hover:bg-red-50"
+                      className="flex items-center gap-2 px-4 py-2 border border-red-500 text-red-500 rounded-xl 
+               hover:bg-red-500 hover:text-white transition-all shadow-sm"
                       onClick={() => handleCancel(order.orderId, order.item.id)}
                     >
+                      <FaTimes />
                       Cancel
                     </button>
+
                     <button
-                      className="px-3 py-1 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50"
+                      className="flex items-center gap-2 px-4 py-2 border border-blue-500 text-blue-500 rounded-xl 
+               hover:bg-blue-500 hover:text-white transition-all shadow-sm"
                       onClick={() => handleEdit(order)}
                     >
+                      <FaEdit />
                       Edit
                     </button>
+
                     <button
-                      className="px-3 py-1 border border-green-500 text-green-500 rounded-lg hover:bg-green-50"
+                      className="flex items-center gap-2 px-4 py-2 border border-green-500 text-green-500 rounded-xl 
+               hover:bg-green-500 hover:text-white transition-all shadow-sm"
                       onClick={() => handleDelivered(order.orderId)}
                     >
+                      <FaCheckCircle />
                       Delivered
                     </button>
                   </div>
@@ -747,7 +783,6 @@ function Homepage() {
                   key={index}
                   className="w-full bg-white p-4 rounded-xl shadow-md flex gap-4"
                 >
-                  {/* Item image or placeholder */}
                   {item.image ? (
                     <img
                       src={item.image}
@@ -760,7 +795,6 @@ function Homepage() {
                     </div>
                   )}
 
-                  {/* Item details + button */}
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">
@@ -774,7 +808,6 @@ function Homepage() {
                       </p>
                     </div>
 
-                    {/* Checkout button */}
                     <div className="flex justify-end mt-3">
                       <button
                         onClick={() => setActiveSection("store")}
