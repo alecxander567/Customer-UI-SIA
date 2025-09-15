@@ -29,6 +29,9 @@ import {
   FaTimes,
   FaEdit,
   FaCheckCircle,
+  FaTag,
+  FaTrash,
+  FaShoppingCart,
 } from "react-icons/fa";
 
 function Homepage() {
@@ -327,7 +330,7 @@ function Homepage() {
 
   useEffect(() => {
     axios
-      .get("https://mean-pears-brake.loca.lt/")
+      .get("https://dark-bikes-act.loca.lt/")
       .then((res) => {
         const transformed = res.data.map((entry) => ({
           id: entry.item.id,
@@ -494,7 +497,9 @@ function Homepage() {
             {items.map((item) => (
               <div
                 key={item.id}
-                className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-200"
+                className={`bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-200 ${
+                  item.quantity === 0 ? "opacity-60 pointer-events-none" : ""
+                }`}
               >
                 <img
                   src={`http://localhost:8080/${item.imagePath.replace(
@@ -516,14 +521,24 @@ function Homepage() {
                   </p>
                   <div className="flex gap-2 mt-3">
                     <button
-                      className="flex-1 bg-gray-300 text-black py-2 rounded-xl hover:bg-gray-400 transition"
+                      className={`flex-1 py-2 rounded-xl transition ${
+                        item.quantity === 0
+                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                          : "bg-gray-300 text-black hover:bg-gray-400"
+                      }`}
                       onClick={() => handleAddToCart(item)}
+                      disabled={item.quantity === 0}
                     >
                       Add to Cart
                     </button>
                     <button
-                      className="flex-1 bg-black text-white py-2 rounded-xl hover:bg-gray-800 transition"
+                      className={`flex-1 py-2 rounded-xl transition ${
+                        item.quantity === 0
+                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                          : "bg-black text-white hover:bg-gray-800"
+                      }`}
                       onClick={() => handleBuyNowClick(item)}
+                      disabled={item.quantity === 0}
                     >
                       Buy Now
                     </button>
@@ -715,27 +730,35 @@ function Homepage() {
                       <h3 className="text-lg font-bold">
                         {cartItem.item?.itemName || "No Item"}
                       </h3>
-                      <p className="text-sm text-gray-600">
-                        Category: {cartItem.item?.category || "N/A"}
+
+                      <p className="text-sm text-gray-600 flex items-center gap-2">
+                        <FaTag className="text-gray-500" />
+                        {cartItem.item?.category || "N/A"}
                       </p>
-                      <p className="text-sm text-gray-800 font-semibold">
-                        Total: ₱{cartItem.total_price}
+
+                      <p className="text-sm text-gray-800 font-semibold flex items-center gap-2">
+                        ₱{cartItem.total_price}
                       </p>
                     </div>
                   </div>
 
                   {/* Right Section: Action Buttons */}
-                  <div className="flex flex-row gap-2 self-end">
+                  <div className="flex flex-row gap-2 self-end mt-4">
                     <button
-                      className="px-3 py-1 border border-red-500 text-red-500 rounded-lg hover:bg-red-50"
+                      className="flex items-center gap-2 px-4 py-2 border border-red-500 text-red-500 rounded-xl 
+               hover:bg-red-500 hover:text-white transition-all shadow-sm"
                       onClick={() => handleRemoveFromCart(cartItem.cartId)}
                     >
+                      <FaTrash />
                       Remove
                     </button>
+
                     <button
-                      className="px-3 py-1 border border-green-500 text-green-500 rounded-lg hover:bg-green-50"
+                      className="flex items-center gap-2 px-4 py-2 border border-green-500 text-green-500 rounded-xl 
+               hover:bg-green-500 hover:text-white transition-all shadow-sm"
                       onClick={() => setActiveSection("store")}
                     >
+                      <FaShoppingCart />
                       Checkout
                     </button>
                   </div>
@@ -1009,13 +1032,13 @@ function Homepage() {
 
             <div className="flex justify-end gap-2">
               <button
-                className="px-3 py-1 border border-gray-500 text-gray-500 rounded-lg hover:bg-gray-50"
+                className="bg-gray-300 py-2 px-4 rounded hover:bg-gray-400"
                 onClick={() => setEditingOrder(null)}
               >
                 Cancel
               </button>
               <button
-                className="px-3 py-1 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50"
+                className="bg-black text-white py-2 px-4 rounded hover:bg-gray-800"
                 onClick={handleSaveEdit}
               >
                 Save
