@@ -330,7 +330,7 @@ function Homepage() {
 
   useEffect(() => {
     axios
-      .get("https://dark-bikes-act.loca.lt/")
+      .get("https://every-zoos-judge.loca.lt/")
       .then((res) => {
         const transformed = res.data.map((entry) => ({
           id: entry.item.id,
@@ -351,7 +351,7 @@ function Homepage() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
-      <header className="w-full flex justify-between items-center bg-black py-5 px-6">
+      <header className="w-full flex justify-between items-center bg-black py-2 px-6">
         <h1 className="flex items-center gap-3 text-xl font-bold text-white">
           <img
             src="/logo.jpg"
@@ -362,7 +362,7 @@ function Homepage() {
         </h1>
 
         {/* Search Bar */}
-        <div className="relative w-80 mb-4">
+        <div className="relative w-80 mb-2 mt-2">
           <input
             type="text"
             placeholder="Search an item..."
