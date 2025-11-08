@@ -118,6 +118,7 @@ function Homepage() {
         "http://localhost:8080/api/orders",
         orderPayload
       );
+
       const orderId = orderResponse.data.orderId;
 
       if (orderForm.payment_type === "CashOnDelivery") {
@@ -169,13 +170,13 @@ function Homepage() {
 
           setShowOrderModal(false);
           setAlertMessage(
-            "Order placed successfully! Please prepare cash on delivery."
+            "✅ Order placed successfully! Please prepare cash on delivery."
           );
-          setTimeout(() => setAlertMessage(""), 3000);
+          setTimeout(() => setAlertMessage(""), 5000);
         } else {
           setOrderMessage("❌ Something went wrong. Please try again.");
           setShowOrderMessage(true);
-          setTimeout(() => setShowOrderMessage(false), 3000);
+          setTimeout(() => setShowOrderMessage(false), 5000);
         }
       } else {
         const paymentResponse = await axios.post(
@@ -193,16 +194,28 @@ function Homepage() {
         } else {
           setOrderMessage("❌ Something went wrong. Please try again.");
           setShowOrderMessage(true);
-          setTimeout(() => setShowOrderMessage(false), 3000);
+          setTimeout(() => setShowOrderMessage(false), 5000);
         }
       }
 
       setShowOrderModal(false);
     } catch (err) {
       console.error("Error creating order/payment:", err);
-      setOrderMessage("❌ Something went wrong. Please try again.");
-      setShowOrderMessage(true);
-      setTimeout(() => setShowOrderMessage(false), 3000);
+
+      if (
+        err.response &&
+        err.response.data &&
+        typeof err.response.data === "string" &&
+        err.response.data.includes("exceeds available stock")
+      ) {
+        alert(
+          "⚠️ Order quantity exceeds available stock. Please reduce the quantity."
+        );
+      } else {
+        setOrderMessage("❌ Something went wrong. Please try again.");
+        setShowOrderMessage(true);
+        setTimeout(() => setShowOrderMessage(false), 5000);
+      }
     }
   };
 
@@ -223,7 +236,6 @@ function Homepage() {
     }
   };
 
-  // handleCancel function
   const handleCancel = async (orderId, itemId) => {
     try {
       await axios.delete(`http://localhost:8080/api/orders/${orderId}/cancel`);
@@ -330,7 +342,7 @@ function Homepage() {
 
   useEffect(() => {
     axios
-      .get("https://every-zoos-judge.loca.lt/")
+      .get("https://quiet-dolls-call.loca.lt/")
       .then((res) => {
         const transformed = res.data.map((entry) => ({
           id: entry.item.id,
@@ -376,8 +388,7 @@ function Homepage() {
 
       <section
         className="relative flex flex-col items-start text-left mt-5 mx-6 px-6 py-20 
-                    bg-black rounded-2xl shadow-lg overflow-hidden"
-      >
+                    bg-black rounded-2xl shadow-lg overflow-hidden">
         {/* Animated background icons */}
         <Wrench className="absolute top-10 left-10 text-gray-700 opacity-80 w-16 h-16 animate-bounce" />
         <Shovel className="absolute top-20 right-20 text-gray-700 opacity-80 w-16 h-16 animate-bounce" />
@@ -408,8 +419,7 @@ function Homepage() {
               activeSection === "store"
                 ? "text-blue-600"
                 : "text-gray-700 hover:text-blue-600"
-            }`}
-          >
+            }`}>
             <Store className="w-5 h-5" />
             Store
           </button>
@@ -419,8 +429,7 @@ function Homepage() {
               activeSection === "orders"
                 ? "text-blue-600"
                 : "text-gray-700 hover:text-blue-600"
-            }`}
-          >
+            }`}>
             <Package className="w-5 h-5" />
             My Orders
           </button>
@@ -430,8 +439,7 @@ function Homepage() {
               activeSection === "cart"
                 ? "text-blue-600"
                 : "text-gray-700 hover:text-blue-600"
-            }`}
-          >
+            }`}>
             <ShoppingCart className="w-5 h-5" />
             Cart
           </button>
@@ -441,8 +449,7 @@ function Homepage() {
               activeSection === "topSelling"
                 ? "text-blue-600"
                 : "text-gray-700 hover:text-blue-600"
-            }`}
-          >
+            }`}>
             <TrendingUp className="w-5 h-5" />
             Top Selling
           </button>
@@ -458,8 +465,7 @@ function Homepage() {
           id="category"
           className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
+          onChange={(e) => setCategory(e.target.value)}>
           <option value="All Categories">All Categories</option>
           <option value="tools">Tools</option>
           <option value="plumbing Tools">Plumbing Tools</option>
@@ -477,13 +483,11 @@ function Homepage() {
                 stroke="currentColor"
                 strokeWidth="2"
                 viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
+                xmlns="http://www.w3.org/2000/svg">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M5 13l4 4L19 7"
-                ></path>
+                  d="M5 13l4 4L19 7"></path>
               </svg>
               <span className="text-black text-lg font-medium">
                 {alertMessage}
@@ -499,8 +503,7 @@ function Homepage() {
                 key={item.id}
                 className={`bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-200 ${
                   item.quantity === 0 ? "opacity-60 pointer-events-none" : ""
-                }`}
-              >
+                }`}>
                 <img
                   src={`http://localhost:8080/${item.imagePath.replace(
                     /\\/g,
@@ -527,8 +530,7 @@ function Homepage() {
                           : "bg-gray-300 text-black hover:bg-gray-400"
                       }`}
                       onClick={() => handleAddToCart(item)}
-                      disabled={item.quantity === 0}
-                    >
+                      disabled={item.quantity === 0}>
                       Add to Cart
                     </button>
                     <button
@@ -538,8 +540,7 @@ function Homepage() {
                           : "bg-black text-white hover:bg-gray-800"
                       }`}
                       onClick={() => handleBuyNowClick(item)}
-                      disabled={item.quantity === 0}
-                    >
+                      disabled={item.quantity === 0}>
                       Buy Now
                     </button>
                   </div>
@@ -561,8 +562,7 @@ function Homepage() {
               />
               <button
                 onClick={fetchOrdersByPhone}
-                className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
-              >
+                className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800">
                 View My Orders
               </button>
             </div>
@@ -575,8 +575,7 @@ function Homepage() {
                     order.status === "Delivered"
                       ? "bg-green-100 border border-green-300"
                       : "bg-white"
-                  }`}
-                >
+                  }`}>
                   {/* Left Section: Image + Details */}
                   <div className="flex items-start gap-4">
                     {order.item ? (
@@ -659,8 +658,9 @@ function Homepage() {
                     <button
                       className="flex items-center gap-2 px-4 py-2 border border-red-500 text-red-500 rounded-xl 
                hover:bg-red-500 hover:text-white transition-all shadow-sm"
-                      onClick={() => handleCancel(order.orderId, order.item.id)}
-                    >
+                      onClick={() =>
+                        handleCancel(order.orderId, order.item.id)
+                      }>
                       <FaTimes />
                       Cancel
                     </button>
@@ -668,8 +668,7 @@ function Homepage() {
                     <button
                       className="flex items-center gap-2 px-4 py-2 border border-blue-500 text-blue-500 rounded-xl 
                hover:bg-blue-500 hover:text-white transition-all shadow-sm"
-                      onClick={() => handleEdit(order)}
-                    >
+                      onClick={() => handleEdit(order)}>
                       <FaEdit />
                       Edit
                     </button>
@@ -677,8 +676,7 @@ function Homepage() {
                     <button
                       className="flex items-center gap-2 px-4 py-2 border border-green-500 text-green-500 rounded-xl 
                hover:bg-green-500 hover:text-white transition-all shadow-sm"
-                      onClick={() => handleDelivered(order.orderId)}
-                    >
+                      onClick={() => handleDelivered(order.orderId)}>
                       <FaCheckCircle />
                       Delivered
                     </button>
@@ -705,8 +703,7 @@ function Homepage() {
               cart.map((cartItem) => (
                 <div
                   key={cartItem.cartId}
-                  className="bg-white shadow rounded-xl p-4 flex justify-between items-start"
-                >
+                  className="bg-white shadow rounded-xl p-4 flex justify-between items-start">
                   {/* Left Section: Image + Details */}
                   <div className="flex items-start gap-4">
                     {/* Item Image */}
@@ -747,8 +744,7 @@ function Homepage() {
                     <button
                       className="flex items-center gap-2 px-4 py-2 border border-red-500 text-red-500 rounded-xl 
                hover:bg-red-500 hover:text-white transition-all shadow-sm"
-                      onClick={() => handleRemoveFromCart(cartItem.cartId)}
-                    >
+                      onClick={() => handleRemoveFromCart(cartItem.cartId)}>
                       <FaTrash />
                       Remove
                     </button>
@@ -756,8 +752,7 @@ function Homepage() {
                     <button
                       className="flex items-center gap-2 px-4 py-2 border border-green-500 text-green-500 rounded-xl 
                hover:bg-green-500 hover:text-white transition-all shadow-sm"
-                      onClick={() => setActiveSection("store")}
-                    >
+                      onClick={() => setActiveSection("store")}>
                       <FaShoppingCart />
                       Checkout
                     </button>
@@ -785,8 +780,7 @@ function Homepage() {
                     x1="0"
                     y1="0"
                     x2="1"
-                    y2="0"
-                  >
+                    y2="0">
                     <stop offset="0%" stopColor="#ff0000" />
                     <stop offset="100%" stopColor="#ffa500" />
                   </linearGradient>
@@ -804,8 +798,7 @@ function Homepage() {
               {topSellingData.slice(0, 5).map((item, index) => (
                 <div
                   key={index}
-                  className="w-full bg-white p-4 rounded-xl shadow-md flex gap-4"
-                >
+                  className="w-full bg-white p-4 rounded-xl shadow-md flex gap-4">
                   {item.image ? (
                     <img
                       src={item.image}
@@ -834,8 +827,7 @@ function Homepage() {
                     <div className="flex justify-end mt-3">
                       <button
                         onClick={() => setActiveSection("store")}
-                        className="px-3 py-1 border border-green-500 text-green-500 rounded-lg hover:bg-green-50"
-                      >
+                        className="px-3 py-1 border border-green-500 text-green-500 rounded-lg hover:bg-green-50">
                         Checkout
                       </button>
                     </div>
@@ -906,8 +898,7 @@ function Homepage() {
                              focus:border-gray-700
                             focus:ring-1
                              focus:ring-gray-700
-                                "
-              >
+                                ">
                 <option value="kilo">Kilo</option>
                 <option value="box">Box</option>
                 <option value="piece">Piece</option>
@@ -917,8 +908,7 @@ function Homepage() {
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5"
                   viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
+                  fill="currentColor">
                   <path
                     fillRule="evenodd"
                     d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
@@ -950,8 +940,7 @@ function Homepage() {
                           focus:border-gray-700
                             focus:ring-1
                             focus:ring-gray-700
-                            "
-              >
+                            ">
                 <option value="Gcash">Gcash</option>
                 <option value="PayMaya">PayMaya</option>
                 <option value="CashOnDelivery">Cash on Delivery</option>
@@ -961,8 +950,7 @@ function Homepage() {
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5"
                   viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
+                  fill="currentColor">
                   <path
                     fillRule="evenodd"
                     d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
@@ -994,14 +982,12 @@ function Homepage() {
             <div className="flex justify-end gap-2 mt-4">
               <button
                 className="bg-gray-300 py-2 px-4 rounded hover:bg-gray-400"
-                onClick={() => setShowOrderModal(false)}
-              >
+                onClick={() => setShowOrderModal(false)}>
                 Cancel
               </button>
               <button
                 className="bg-black text-white py-2 px-4 rounded hover:bg-gray-800"
-                onClick={handleOrderSubmit}
-              >
+                onClick={handleOrderSubmit}>
                 Proceed to Payment
               </button>
             </div>
@@ -1033,14 +1019,12 @@ function Homepage() {
             <div className="flex justify-end gap-2">
               <button
                 className="bg-gray-300 py-2 px-4 rounded hover:bg-gray-400"
-                onClick={() => setEditingOrder(null)}
-              >
+                onClick={() => setEditingOrder(null)}>
                 Cancel
               </button>
               <button
                 className="bg-black text-white py-2 px-4 rounded hover:bg-gray-800"
-                onClick={handleSaveEdit}
-              >
+                onClick={handleSaveEdit}>
                 Save
               </button>
             </div>
