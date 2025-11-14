@@ -258,7 +258,9 @@ function Landingpage() {
           <div className="text-center md:text-left space-y-2">
             <h4 className="text-xl font-semibold mb-3">Follow Us</h4>
             <div className="flex justify-center md:justify-start gap-4 text-2xl">
-              <a href="#" className="hover:text-blue-500">
+              <a
+                href="https://www.facebook.com/profile.php?id=61583605855684"
+                className="hover:text-blue-500">
                 <FaFacebookF />
               </a>
               <a href="#" className="hover:text-sky-400">
