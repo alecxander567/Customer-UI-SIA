@@ -51,8 +51,7 @@ function Landingpage() {
         <div className="hidden md:block">
           <Link
             to="/home"
-            className="w-full mt-4 bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
-          >
+            className="w-full mt-4 bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition">
             Shop Now
           </Link>
         </div>
@@ -60,8 +59,7 @@ function Landingpage() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden text-2xl text-black z-30"
-        >
+          className="md:hidden text-2xl text-black z-30">
           {isOpen ? <FaTimes /> : <FaBars />}
         </button>
       </header>
@@ -73,41 +71,35 @@ function Landingpage() {
                         ? "top-20 opacity-100 max-h-96"
                         : "top-16 opacity-0 max-h-0 pointer-events-none"
                     }
-                `}
-      >
+                `}>
         <a
           href="#services"
           onClick={() => setIsOpen(false)}
-          className="block hover:text-gray-600"
-        >
+          className="block hover:text-gray-600">
           Services
         </a>
         <a
           href="#about"
           onClick={() => setIsOpen(false)}
-          className="block hover:text-gray-600"
-        >
+          className="block hover:text-gray-600">
           About
         </a>
         <a
           href="#contact"
           onClick={() => setIsOpen(false)}
-          className="block hover:text-gray-600"
-        >
+          className="block hover:text-gray-600">
           Contact
         </a>
         <Link
           to="/home"
-          className="w-full mt-4 bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
-        >
+          className="w-full mt-4 bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition">
           Shop Now
         </Link>
       </div>
 
       <section
         className="bg-gradient-to-r from-black via-black to-gray-100 text-white px-4 sm:px-6 md:px-10 lg:px-20 pb-10 min-h-screen flex items-center justify-center"
-        id="home"
-      >
+        id="home">
         <div className="flex flex-col md:flex-row w-full items-center md:items-start justify-between gap-6">
           {/* Left: Text Content */}
           <div className="max-w-xl text-center md:text-left flex flex-col items-center md:items-start mt-10">
@@ -123,8 +115,7 @@ function Landingpage() {
             {/* Shop Now Button */}
             <Link
               to="/home"
-              className="w-full sm:w-auto mt-4 bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 hover:text-black transition shadow-md text-center"
-            >
+              className="w-full sm:w-auto mt-4 bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 hover:text-black transition shadow-md text-center">
               Shop Now
             </Link>
           </div>
@@ -166,6 +157,58 @@ function Landingpage() {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="py-10 px-10 bg-white" id="products">
+        <h3 className="text-5xl font-bold text-center mb-10 text-black">
+          Our Products
+        </h3>
+        <hr></hr>
+        <div className="grid md:grid-cols-3 gap-10 text-center">
+          {[
+            {
+              src: "/grill.png",
+              alt: "Cordless Drill",
+              title: "Cordless Drill",
+              desc: "High-performance drill with long battery life.",
+              price: "₱2,499.00",
+            },
+            {
+              src: "/angle.png",
+              alt: "Angle Grinder",
+              title: "Angle Grinder",
+              desc: "Durable grinder ideal for metal and concrete work.",
+              price: "₱3,199.00",
+            },
+            {
+              src: "/hammer.png",
+              alt: "Hammer Drill",
+              title: "Hammer Drill",
+              desc: "Powerful tool for heavy-duty construction work.",
+              price: "₱4,499.00",
+            },
+          ].map((product, idx) => (
+            <div
+              key={idx}
+              className="shadow-lg p-6 rounded-lg flex flex-col justify-between h-full">
+              <div>
+                <img
+                  src={product.src}
+                  alt={product.alt}
+                  className="w-full h-64 mb-4 rounded"
+                />
+                <h4 className="text-xl font-semibold mb-2">{product.title}</h4>
+                <p className="mb-2">{product.desc}</p>
+                <span className="block font-bold text-lg mb-3">
+                  {product.price}
+                </span>
+              </div>
+              <button className="mt-4 bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition">
+                View Details
+              </button>
+            </div>
+          ))}
         </div>
       </section>
 

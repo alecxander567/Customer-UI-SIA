@@ -342,7 +342,7 @@ function Homepage() {
 
   useEffect(() => {
     axios
-      .get("https://quiet-dolls-call.loca.lt/")
+      .get("https://cute-teams-sing.loca.lt/")
       .then((res) => {
         const transformed = res.data.map((entry) => ({
           id: entry.item.id,
