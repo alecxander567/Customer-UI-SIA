@@ -111,6 +111,7 @@ function Mockup() {
   const [cart, setCart] = useState([]);
   const [editingItem, setEditingItem] = useState(null);
   const [newQuantity, setNewQuantity] = useState(1);
+  const [alertMessage, setAlertMessage] = useState(""); // <-- new state
 
   // Update item quantity
   const handleItemQuantityUpdate = (itemId, change) => {
@@ -129,6 +130,10 @@ function Mockup() {
       ...prev,
       { cartId: Date.now(), item, quantity: 1, total_price: item.price },
     ]);
+
+    // Show alert
+    setAlertMessage(`${item.itemName} added to cart!`);
+    setTimeout(() => setAlertMessage(""), 2500); // hide after 2.5s
   };
 
   // Remove from cart
@@ -153,6 +158,16 @@ function Mockup() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
+      {/* Alert */}
+      {alertMessage && (
+        <div
+          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
+               bg-green-500 text-white px-8 py-4 rounded-lg shadow-lg
+               z-50 text-xl font-bold animate-fade-in-out text-center">
+          {alertMessage}
+        </div>
+      )}
+
       <h1 className="text-3xl font-bold mb-6"></h1>
       <section
         className="relative flex flex-col items-start text-left mt-5 mx-6 px-6 py-20 
