@@ -204,9 +204,11 @@ function Landingpage() {
                   {product.price}
                 </span>
               </div>
-              <button className="mt-4 bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition">
+              <Link
+                to="/mockup" // the route you want to navigate to
+                className="mt-4 bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition inline-block text-center">
                 View Details
-              </button>
+              </Link>
             </div>
           ))}
         </div>
